@@ -3,14 +3,47 @@ define("TASKS_FILE", "tasks.json");
 function loadTask(): array
 {
     if (!file_exists(TASKS_FILE)) {
-        $tasks = file_get_contents(TASKS_FILE);
+        return [];
     }
+    $tasks = file_get_contents(TASKS_FILE);
     return $tasks ? json_decode($tasks, true) : [];
 }
 $tasks = loadTask();
 function saveTask(array $tasks): void
 {
     file_put_contents(TASKS_FILE, json_encode($tasks, JSON_PRETTY_PRINT));
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    if (isset($_POST['task']) && !empty(trim($_POST['task']))) {
+        $task = trim($_POST['task']);
+        $tasks[] = ['task' => $task, 'done' => false];
+        saveTask($tasks);
+
+        var_dump($_SERVER['PHP_SELF']);
+        header('Location:' . $_SERVER['PHP_SELF']);
+        exit();
+    }
+    if (isset($_POST['toggle'])) {
+        $index = (int)$_POST['toggle'];
+        if (isset($tasks[$index])) {
+            $tasks[$index]['done'] = !$tasks[$index]['done'];
+            saveTask($tasks);
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit();
+        }
+    }
+    if (isset($_POST['delete'])) {
+        $index = (int)$_POST['delete'];
+        if (isset($tasks[$index])) {
+            unset($tasks[$index]);
+            $tasks  = array_values($tasks); // reindex the array
+            saveTask($tasks);
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit();
+        }
+    }
 }
 
 ?>
